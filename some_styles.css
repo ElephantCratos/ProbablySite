@@ -1,0 +1,31 @@
+.vertical-tabs {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ccc;
+    height: 400px;
+    width: 300px;
+}
+.vertical-tabs button {
+    width: 100%;
+    padding: 10px;
+    background-color: #f2f2f2;
+    border: none;
+    outline: none;
+    text-align: left;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+.vertical-tabs button.active {
+    background-color: #e6e6e6;
+}
+.vertical-tabs button:hover {
+    background-color: #e6e6e6;
+}
+.vertical-tabs .tab-content {
+    padding: 10px;
+    border-top: 1px solid #ccc;
+    display: none;
+}
+.vertical-tabs .tab-content.active {
+    display: block;
+}
