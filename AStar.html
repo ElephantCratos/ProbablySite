@@ -4,27 +4,116 @@
     <meta charset="UTF-8">
     <title>Алгоритм A*</title>
     <style>
-      body
-      {
-      font-family: Arial, sans-serif;
-      background-color: #fffbf0;
-     }
-      h1 {
-          text-align: center;
-          color: #333;
-      }
-      img
-       {
-          position: relative;  top: 50px;
-          left: 440px;
-          width: 1000px;
-          height: 500px;
-       }
+        body
+        {
+            font-family: Arial, sans-serif;
+            background-color: #fffbf0;
+        }
+        label {
+            text-align: center;
+            color: #262624;
+        }
+        table {
+            border-collapse: separate;
+            width: 700px;
+            height: 700px;
+            margin: auto;
+        }
+        td {
+            border: 1px solid black;
+            height:auto; width:auto;
+            box-shadow: 0 2px 4px #b9b9b7;
+            transition: all 0.1s ease-in-out;
+        }
+        td:hover{
+            transform: translateY(-2px);
+            box-shadow: 0 5px 10px #cccccc;
+        }
 
+        .start {
+            background: yellow;
+        }
+
+        .finish {
+            background: red;
+        }
+
+        .obstacle {
+            background: blue;
+        }
     </style>
 </head>
 <body>
-<h1>Здесь могла быть ваша реклама</h1>
-<img src="img.png" alt="Звоните Солу">
+<label>Размерность таблицы:
+    <input type="number" id="row" name="row"></label>
+<br>
+<button onclick="createTable()">Создать таблицу</button>
+<br>
+<button onclick="setStart()">Старт</button>
+<button onclick="setFinish()">Финиш</button>
+<button onclick="createObstacle()">Препятствие</button>
+<button onclick="TableIntoMatrix()">Проверка TableIntoMatrix</button>
+<table id="myTable"></table>
+<script>
+    let color = "yellow";
+    const colors = {
+        'yellow' : 'start',
+        'red': 'finish',
+        'blue': 'obstacle',
+    };
+    const table = document.getElementById("myTable");
+
+    function createTable() {
+        const rows = parseInt(document.getElementById("row").value);
+        table.innerHTML = "";
+
+        if (rows < 3) {
+            return window.alert("Введите значение больше 3");
+        }
+
+        for (let i = 0; i < rows; i++) {
+            const row = table.insertRow(i);
+
+            for (let j = 0; j < rows; j++) {
+                const cell = row.insertCell(j);
+                const id =`${i}${j}`;
+
+                cell.setAttribute("id", id);
+                cell.addEventListener("click", function() {
+                    const classCell = colors[color];
+                    const old = document.getElementsByClassName(classCell)[0];
+                    if (old && classCell!='obstacle') old.classList = '';
+                    if (classCell=='obstacle' && cell.classList.contains('obstacle')){cell.classList= '';}
+                    else
+                    cell.classList = classCell;
+                    console.log(cell);
+
+                    // cell.style.backgroundColor = color;
+                })
+            }
+        }
+    }
+
+    function setStart() {
+        color = "yellow";
+    }
+
+    function setFinish() {
+        color = "red";
+    }
+
+    function createObstacle() {
+        color = "blue";
+    }
+
+    function TableIntoMatrix(){
+        let rows = parseInt(document.getElementById("row").value);
+        const arr = [];
+        for (let i = 0; i < rows;i++)
+            arr[i] = [];
+        return console.log(arr);
+    }
+</script>
+
 </body>
 </html>
