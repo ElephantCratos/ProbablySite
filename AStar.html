@@ -41,6 +41,9 @@
         .obstacle {
             background: blue;
         }
+        .path{
+            background : #2dc790;
+        }
     </style>
 </head>
 <body>
@@ -49,10 +52,10 @@
 <br>
 <button onclick="createTable()">Создать таблицу</button>
 <br>
-<button onclick="setStart()">Старт</button>
-<button onclick="setFinish()">Финиш</button>
-<button onclick="createObstacle()">Препятствие</button>
-<button onclick="TableIntoMatrix()">Проверка TableIntoMatrix</button>
+<button onclick="setColor('yellow')">Старт</button>
+<button onclick="setColor('red')">Финиш</button>
+<button onclick="setColor('blue')">Препятствие</button>
+<button onclick="TableIntoMatrix()">Найти Путь</button>
 <table id="myTable"></table>
 <script>
     let color = "yellow";
@@ -61,6 +64,19 @@
         'red': 'finish',
         'blue': 'obstacle',
     };
+    class Node
+    {
+        constructor(i, j, isObstacle) {
+            this.i = i;
+            this.j = j;
+            this.isObtacle = isObstacle;
+            this.heuristic = 0;
+            this.f = 100000000;
+            this.goal = this.f + this.heuristic;
+            this.parent = null;
+        }
+
+    }
     const table = document.getElementById("myTable");
 
     function createTable() {
@@ -76,16 +92,16 @@
 
             for (let j = 0; j < rows; j++) {
                 const cell = row.insertCell(j);
-                const id =`${i}${j}`;
+                const id =`${i}-${j}`;
 
                 cell.setAttribute("id", id);
                 cell.addEventListener("click", function() {
                     const classCell = colors[color];
                     const old = document.getElementsByClassName(classCell)[0];
-                    if (old && classCell!='obstacle') old.classList = '';
-                    if (classCell=='obstacle' && cell.classList.contains('obstacle')){cell.classList= '';}
-                    else
-                    cell.classList = classCell;
+
+                    if (old && classCell !== 'obstacle') old.classList = '';
+                    if (classCell === 'obstacle' && cell.classList.contains('obstacle')) cell.classList= '';
+                    else cell.classList = classCell;
                     console.log(cell);
 
                     // cell.style.backgroundColor = color;
@@ -94,25 +110,134 @@
         }
     }
 
-    function setStart() {
-        color = "yellow";
+    function setColor(colorCell) {
+        color = colorCell;
     }
 
-    function setFinish() {
-        color = "red";
+    function TableIntoMatrix() {
+        if (!document.getElementsByClassName('start')[0] || !document.getElementsByClassName('finish')[0]) {
+            return window.alert("Назначьте старт и финиш!");
+        }
+        const nodes = [];
+        for (let i = 0; i < table.rows.length; i++) {
+            nodes[i] = [];
+
+            for (let j = 0; j < table.rows[i].cells.length; j++) {
+                let cell = table.rows[i].cells[j];
+                let isObstacle = cell.classList.contains('obstacle');
+                nodes[i][j] = new Node(i, j, isObstacle);
+            }
+        }
+        console.log(nodes);
+
+        A_star(nodes);
+    }
+    function manhattanDistance (current, finishPoint, nodes){
+        let y1 = current.i; let y2 = finishPoint.i;
+        let x1 = current.j; let x2 = finishPoint.j;
+        return Math.abs(y2-y1) + Math.abs(x2-x1);
+    }
+    function A_star(nodes) {
+        let startPoint = document.getElementsByClassName('start')[0];
+        console.log('Here is startPoint, finishPoint will be next');
+        let indexes = startPoint.id.split('-');
+        startPoint = nodes[Number(indexes[0])][Number(indexes[1])];
+        console.log(startPoint);
+
+        let finishPoint = document.getElementsByClassName('finish')[0];
+        indexes = finishPoint.id.split('-');
+        finishPoint = nodes[Number(indexes[0])][Number(indexes[1])];
+        console.log(finishPoint);
+
+        let openList = [startPoint];
+        let closedList = [];
+        startPoint.goal = 0;
+        startPoint.heuristic = manhattanDistance(startPoint,finishPoint);
+
+        while (openList.length > 0) {
+            openList.sort((a, b) => a.goal - b.goal);
+            let current = openList.shift();
+            closedList.push(current);
+
+            if (current === finishPoint)
+            {
+                const path = [];
+                let temp = current;
+                while (temp !== startPoint)
+                {
+                    path.push(temp);
+                    temp = temp.parent;
+                }
+                path.shift();
+
+                // for (let k = 0 ; k < path.length;k++){ b
+                // changecolor.backgroundColor = "brown";}
+                console.log(finishPoint);
+                paintPath(path);
+                console.log(path);
+                return;
+            }
+            let neighbours = [];
+            neighbours = getNeighbours(current,nodes);
+            for (let k = 0; k < neighbours.length; k++)
+            {
+                let neighbour = neighbours[k];
+                if (closedList.includes(neighbour)) { continue; }
+                let G = current.goal + manhattanDistance(current, finishPoint);
+                if (!openList.includes(neighbour) || G < neighbour.goal)
+                {
+                    neighbour.goal = G;
+                    neighbour.heuristic = manhattanDistance(neighbour,finishPoint);
+                    neighbour.f =neighbour.goal + neighbour.heuristic*10;
+                    neighbour.parent = current;
+                }
+                if (!openList.includes(neighbour)) { openList.push(neighbour); }
+            }
+        }
+        window.alert('Маршрут не существует');
+    }
+    function getNeighbours(point, nodes)
+    {
+        const neighbours = [];
+        const i = point.i;
+        const j = point.j;
+        const n = nodes[i].length;
+
+        // Orthogonal cells
+
+        if (i-1 > - 1 && !nodes[i-1][j].isObtacle) {neighbours.push(nodes[i-1][j]);}
+        // Up
+        if (i+1 < n && !nodes[i+1][j].isObtacle) {neighbours.push(nodes[i+1][j]);}
+        // Down
+        if (j - 1 > - 1 && !nodes[i][j-1].isObtacle) { neighbours.push(nodes[i][j-1])}
+        // Left
+        if (j +1 < n && !nodes[i][j+1].isObtacle) { neighbours.push(nodes[i][j+1])}
+        // Right
+
+        // Diagonal cells
+
+        if (i-1 > -1 && j-1>-1 && !nodes[i-1][j-1].isObtacle) {neighbours.push(nodes[i-1][j-1])}
+        // Up + Left
+        if (i - 1 > -1 && j + 1 < n && !nodes[i-1][j+1].isObtacle){neighbours.push(nodes[i-1][j+1])}
+        // Up + Right
+        if (i+1 < n && j-1>-1  && !nodes[i+1][j-1].isObtacle) {neighbours.push(nodes[i+1][j-1])}
+        // Down + Left
+        if (i + 1 < n && j + 1 < n && !nodes[i+1][j+1].isObtacle){neighbours.push(nodes[i+1][j+1])}
+        // Down + Right
+
+
+        //console.log(neighbours);
+        return neighbours;
+    }
+    function paintPath(paths)
+    {
+        paths.forEach(item => {
+            const el = document.getElementById(`${item.i}-${item.j}`);
+            el.classList = 'path';
+        });
     }
 
-    function createObstacle() {
-        color = "blue";
-    }
 
-    function TableIntoMatrix(){
-        let rows = parseInt(document.getElementById("row").value);
-        const arr = [];
-        for (let i = 0; i < rows;i++)
-            arr[i] = [];
-        return console.log(arr);
-    }
 </script>
 
 </body>
