@@ -91,6 +91,7 @@
             for (let i = 0; i < k; i++) {
                 clusters.push([]);
             }
+
             for (let iter = 0; iter < MAX_ITER; iter++) {
                 for (let i = 0; i < k; i++) {
                     clusters[i] = [];
@@ -199,8 +200,8 @@
     }
 
     document.getElementById('clusterButton').addEventListener('click', function() {
-        const maxClusters = points.length < 9 ? points.length : 9;
-        const clusters = kmeans(points, maxClusters);
+        const maxClusters = 9;
+        const clusters = kmeans (points, maxClusters);
         drawPoints(clusters);
     });
 
