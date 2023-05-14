@@ -4,27 +4,182 @@
     <meta charset="UTF-8">
     <title>Алгоритм кластеризации</title>
     <style>
-        body
-        {
-            font-family: Arial, sans-serif;
-            background-color: #fffbf0;
+        canvas {
+            border: 1px solid black;
         }
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-        img
-        {
-            position: relative;  top: 50px;
-            left: 440px;
-            width: 1000px;
-            height: 500px;
-        }
-
     </style>
 </head>
 <body>
-<h1>Здесь могла быть ваша реклама</h1>
-<img src="img.png" alt="Звоните Солу">
+<canvas id="canvas" width="1400" height="800"></canvas>
+<br>
+<button id="clusterButton">Кластеризировать</button>
+<script>
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    let points = [];
+    const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'pink', 'brown', 'gray'];
+
+    function distance(p1, p2) {
+        const dx = p1.x - p2.x;
+        const dy = p1.y - p2.y;
+        return Math.sqrt(dx*dx + dy*dy);
+    }
+
+    function silhouetteCoefficient(cluster, point) {
+        let a = 0;
+        let b = Infinity;
+        for (let i = 0; i < cluster.length; i++) {
+            a += distance(cluster[i], point);
+        }
+        a /= cluster.length;
+        for (let i = 0; i < points.length; i++) {
+            if (cluster.includes(points[i])) {
+                continue;
+            }
+            const d = distance(point, points[i]);
+            if (d < b) {
+                b = d;
+            }
+        }
+        return (b - a) / Math.max(a, b);
+    }
+
+    function kmeans(points, maxClusters) {
+        let silhouetteCoefficients = [];
+        for (let k = 2; k <= maxClusters; k++) {
+            const MAX_ITER = 50;
+            let centers = [];
+            for (let i = 0; i < k; i++) {
+                const index = Math.floor(Math.random() * points.length);
+                centers.push(points[index]);
+            }
+            let clusters = [];
+            for (let i = 0; i < k; i++) {
+                clusters.push([]);
+            }
+            for (let iter = 0; iter < MAX_ITER; iter++) {
+                for (let i = 0; i < k; i++) {
+                    clusters[i] = [];
+                }
+                for (let i = 0; i < points.length; i++) {
+                    let minDistance = Infinity;
+                    let clusterIndex = 0;
+                    for (let j = 0; j < k; j++) {
+                        const d = distance(points[i], centers[j]);
+                        if (d < minDistance) {
+                            minDistance = d;
+                            clusterIndex = j;
+                        }
+                    }
+                    clusters[clusterIndex].push(points[i]);
+                }
+                for (let i = 0; i < k; i++) {
+                    if (clusters[i].length > 0) {
+                        centers[i] = clusters[i].reduce((acc, point) => ({x: acc.x + point.x, y: acc.y + point.y}), {x: 0, y: 0});
+                        centers[i].x /= clusters[i].length;
+                        centers[i].y /= clusters[i].length;
+                    }
+                }
+            }
+            let s = 0;
+            for (let i = 0; i < k; i++) {
+                for (let j = 0; j < clusters[i].length; j++) {
+                    s += silhouetteCoefficient(clusters[i], clusters[i][j]);
+                }
+            }
+            silhouetteCoefficients.push(s / points.length);
+        }
+        let maxCoefficient = -Infinity;
+        let bestK = -1;
+        for (let k = 2; k <= maxClusters; k++) {
+            if (silhouetteCoefficients[k-2] > maxCoefficient) {
+                maxCoefficient = silhouetteCoefficients[k-2];
+                bestK = k;
+            }
+        }
+        return kmeansHelper(points, bestK, []);
+    }
+
+    function kmeansHelper(points, k, currentClusters) {
+        if (currentClusters.length === k) {
+            return currentClusters;
+        }
+        let centers = [];
+        for (let i = 0; i < k; i++) {
+            const index = Math.floor(Math.random() * points.length);
+            centers.push(points[index]);
+        }
+        const MAX_ITER = 50;
+        let clusters = [];
+        for (let i = 0; i < k; i++) {
+            clusters.push([]);
+        }
+        for (let iter = 0; iter < MAX_ITER; iter++) {
+            for (let i = 0; i < k; i++) {
+                clusters[i] = [];
+            }
+            for (let i = 0; i < points.length; i++) {
+                let minDistance = Infinity;
+                let clusterIndex = 0;
+                for (let j = 0; j < k; j++) {
+                    const d = distance(points[i], centers[j]);
+                    if (d < minDistance) {
+                        minDistance = d;
+                        clusterIndex = j;
+                    }
+                }
+                clusters[clusterIndex].push(points[i]);
+            }
+            for (let i = 0; i < k; i++) {
+                if (clusters[i].length > 0) {
+                    centers[i] = clusters[i].reduce((acc, point) => ({x: acc.x + point.x, y: acc.y + point.y}), {x: 0, y: 0});
+                    centers[i].x /= clusters[i].length;
+                    centers[i].y /= clusters[i].length;
+                }
+            }
+        }
+        currentClusters = [];
+        for (let i = 0; i < k; i++) {
+            currentClusters.push({points: clusters[i], center: centers[i]});
+        }
+        return kmeansHelper(points, k, currentClusters);
+    }
+
+    function paintPoints(clusters) {
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < points.length; i++) {
+            let maxCoefficient = -Infinity;
+            let clusterIndex = -1;
+            for (let j = 0; j < clusters.length; j++) {
+                const coefficient = silhouetteCoefficient(clusters[j].points, points[i]);
+                if (coefficient > maxCoefficient) {
+                    maxCoefficient = coefficient;
+                    clusterIndex = j;
+                }
+            }
+            context.fillStyle = colors[clusterIndex];
+            context.beginPath();
+            context.arc(points[i].x, points[i].y, 10, 0, 2 * Math.PI);
+            context.fill();
+        }
+    }
+
+    document.getElementById('clusterButton').addEventListener('click', function() {
+        const maxClusters = points.length < 9 ? points.length : 9;
+        const clusters = kmeans(points, maxClusters);
+        paintPoints(clusters);
+    });
+
+    canvas.addEventListener('click', function(event) {
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        points.push({x: x, y: y});
+        context.fillStyle = 'black';
+        context.beginPath();
+        context.arc(x, y, 10, 0, 2 * Math.PI);
+        context.fill();
+    });
+</script>
 </body>
 </html>
