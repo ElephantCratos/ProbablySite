@@ -5,7 +5,40 @@
     <title>Алгоритм кластеризации</title>
     <style>
         canvas {
+            margin:auto;
             border: 1px solid black;
+        }
+        button {
+
+            margin: 5px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 150px;
+            text-align: center;
+        }
+        .mainpage
+        {
+            margin: 10px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            width: 120px;
+            position:absolute;
+            bottom:0;
+            right:0;
+
+        }
+        a {
+            text-decoration: none;
+            color:white;
+            font-size: 18px;
+
         }
     </style>
 </head>
@@ -13,6 +46,7 @@
 <canvas id="canvas" width="1400" height="800"></canvas>
 <br>
 <button id="clusterButton">Кластеризировать</button>
+<button onclick class='mainpage'> <a href="MainPage.html">Вернуться на<br> главную страницу</a> </button>
 <script>
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
@@ -145,7 +179,7 @@
         return kmeansHelper(points, k, currentClusters);
     }
 
-    function paintPoints(clusters) {
+    function drawPoints(clusters) {
         context.clearRect(0, 0, canvas.width, canvas.height);
         for (let i = 0; i < points.length; i++) {
             let maxCoefficient = -Infinity;
@@ -167,7 +201,7 @@
     document.getElementById('clusterButton').addEventListener('click', function() {
         const maxClusters = points.length < 9 ? points.length : 9;
         const clusters = kmeans(points, maxClusters);
-        paintPoints(clusters);
+        drawPoints(clusters);
     });
 
     canvas.addEventListener('click', function(event) {
